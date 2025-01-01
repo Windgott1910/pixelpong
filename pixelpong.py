@@ -1,15 +1,16 @@
 import pygame
-from pygame import *
 import socket
 from random import randint, random
 
 ##### CONFIG #####
 HOST = 'table.apokalypse.email'
 PORT = 1337
-GlobalOffset = [0, 800]
+GlobalOffset = [0, 0]
 PadelGraceRange = 1
 ClutchRadius = 5
 ScoreboardOffset = 8
+delayTime = 20
+clear = False # not recommended, only if noone else is clearing, not polished, bad visuals, just don't
 
 # socket init
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -18,16 +19,16 @@ sock.connect((HOST, PORT))
 # pygame init
 pygame.init()
 screen = pygame.display.set_mode((100, 100))
-pygame.key.set_repeat(20, 20)
+pygame.key.set_repeat(delayTime, delayTime)
 
-# pixel definition
+# pixel drawing def
 def pixel(x, y, r, g, b, a=255):
     if a == 255:
         sock.send(b'PX %d %d %02x%02x%02x\n' % (x, y, r, g, b))
     else:
         sock.send(b'PX %d %d %02x%02x%02x%02x\n' % (x, y, r, g, b, a))
 
-# random ball speed
+# rand ball speed
 def ballSpedRand():
     tempX = randint(1, 2)
     if random() > 0.5:
@@ -48,20 +49,26 @@ Player2Offset = [128, 12]
 BallOffset = [64, 32]
 BallSpeed = ballSpedRand()
 
+# main loop
 while running:
     # key controls
     keys_pressed = pygame.event.get()
     keys = pygame.key.get_pressed()
-    if keys[K_w]:
+    if keys[pygame.K_w]:
         Player1Offset[1] -= 1
-    if keys[K_s]:
+    if keys[pygame.K_s]:
         Player1Offset[1] += 1
-    if keys[K_UP]:
+    if keys[pygame.K_UP]:
         Player2Offset[1] -= 1
-    if keys[K_DOWN]:
+    if keys[pygame.K_DOWN]:
         Player2Offset[1] += 1
 
     # rendering
+    # clearing
+    if clear:
+        for x in range(129):
+            for y in range(65):
+                pixel(x + GlobalOffset[0], y + GlobalOffset[1], 0x00, 0x00, 0x00)
     # left pedal
     for x in range(sizeX + 1):
         for y in range(sizeY + 1):
@@ -86,6 +93,7 @@ while running:
     for x in range(9 - 2 * catch2):
         for y in range(3):
             pixel(x + GlobalOffset[0] + 64 + ScoreboardOffset, y + GlobalOffset[1], 0xFF, 0xFF, 0xFF)
+
 
     # ball movement
     BallOffset[0] += BallSpeed[0]
@@ -121,9 +129,9 @@ while running:
             for x in range(129):
                 for y in range(65):
                     pixel(x + GlobalOffset[0], y + GlobalOffset[1], 0xFF, 0xFF, 0xFF)
-            pygame.time.wait(20)
+            pygame.time.wait(delayTime)
         catch1 = 0
         catch2 = 0
 
     # fps
-    pygame.time.wait(20)
+    pygame.time.wait(delayTime)
